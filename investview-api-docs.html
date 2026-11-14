@@ -1,0 +1,526 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Investview-API · Documentação</title>
+<style>
+:root{
+  --bg:#0b1020; --panel:#111833; --panel2:#0e1529; --line:#1f2a4d;
+  --text:#d8e0f5; --muted:#8b97bd; --cyan:#22d3ee; --cyan2:#0891b2;
+  --get:#22c55e; --post:#3b82f6; --put:#f59e0b; --del:#ef4444;
+  --code:#0a0f1f; --radius:12px;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --sans:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:20px}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.65;
+  background-image:radial-gradient(900px 400px at 85% -10%,rgba(34,211,238,.08),transparent);}
+a{color:var(--cyan);text-decoration:none}
+a:hover{text-decoration:underline}
+code{font-family:var(--mono);font-size:.88em;background:rgba(34,211,238,.09);color:#a5f3fc;padding:.1em .4em;border-radius:5px}
+
+/* layout */
+.side{position:fixed;inset:0 auto 0 0;width:290px;background:var(--panel2);border-right:1px solid var(--line);
+  padding:22px 16px;overflow-y:auto;z-index:10}
+.brand{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.logo{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--cyan),#6366f1);
+  display:grid;place-items:center;font-weight:800;color:#06121f}
+.brand b{font-size:1.1rem}
+.ver{color:var(--muted);font-size:.78rem;margin:0 0 14px}
+#search{width:100%;background:var(--code);border:1px solid var(--line);color:var(--text);
+  padding:9px 12px;border-radius:8px;font:inherit;font-size:.9rem;margin-bottom:14px}
+#search:focus{outline:2px solid var(--cyan2);border-color:transparent}
+.side h4{margin:18px 0 6px;font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.side a.nav{display:flex;gap:8px;align-items:center;padding:5px 8px;border-radius:6px;color:var(--text);font-size:.88rem}
+.side a.nav:hover{background:rgba(34,211,238,.08);text-decoration:none}
+.side a.nav.active{background:rgba(34,211,238,.14);color:var(--cyan)}
+.mini{font:700 .62rem var(--mono);padding:2px 5px;border-radius:4px;min-width:38px;text-align:center}
+main{margin-left:290px;padding:48px clamp(20px,5vw,64px) 100px;max-width:1100px}
+section{margin-bottom:64px}
+h1{font-size:2.3rem;margin:0 0 8px;letter-spacing:-.02em}
+h1 span{background:linear-gradient(90deg,var(--cyan),#818cf8);-webkit-background-clip:text;background-clip:text;color:transparent}
+h2{font-size:1.5rem;margin:0 0 16px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+h3{font-size:1.1rem;margin:28px 0 10px}
+p{margin:.6em 0}
+.lead{color:var(--muted);font-size:1.05rem;max-width:720px}
+.badges{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0}
+.chip{border:1px solid var(--line);background:var(--panel);padding:4px 11px;border-radius:99px;font-size:.8rem;color:var(--muted)}
+.chip b{color:var(--cyan);font-weight:600}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin:16px 0}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px}
+.card h5{margin:0 0 6px;font-size:.95rem;color:var(--cyan)}
+.card p{margin:0;font-size:.9rem;color:var(--muted)}
+.callout{border-left:3px solid var(--cyan);background:rgba(34,211,238,.06);padding:12px 16px;border-radius:0 8px 8px 0;margin:16px 0;font-size:.93rem}
+.callout.warn{border-color:var(--put);background:rgba(245,158,11,.07)}
+table{width:100%;border-collapse:collapse;font-size:.9rem;margin:12px 0;background:var(--panel);
+  border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+th,td{text-align:left;padding:9px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+th{background:var(--panel2);color:var(--muted);font-size:.75rem;text-transform:uppercase;letter-spacing:.08em}
+tr:last-child td{border-bottom:0}
+
+/* code */
+.codewrap{position:relative;margin:10px 0}
+pre{margin:0;background:var(--code);border:1px solid var(--line);border-radius:10px;padding:14px 16px;
+  overflow-x:auto;font:.84rem/1.55 var(--mono);color:#cbd5e1}
+pre code{background:none;color:inherit;padding:0;font-size:inherit}
+.copy{position:absolute;top:8px;right:8px;background:var(--panel);border:1px solid var(--line);color:var(--muted);
+  font:.7rem var(--sans);padding:3px 9px;border-radius:6px;cursor:pointer}
+.copy:hover{color:var(--cyan);border-color:var(--cyan2)}
+.k{color:#7dd3fc}.s{color:#86efac}.n{color:#fbbf24}.b{color:#f0abfc}
+.lbl{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:14px 0 2px}
+
+/* endpoints */
+.mod{margin:36px 0 12px;display:flex;align-items:center;gap:12px}
+.mod h3{margin:0}
+.tag{font-size:.7rem;border:1px solid var(--line);color:var(--muted);padding:2px 9px;border-radius:99px}
+details.ep{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);margin:10px 0;overflow:hidden}
+details.ep[open]{border-color:#2b3a6b}
+details.ep summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:12px 16px}
+details.ep summary::-webkit-details-marker{display:none}
+details.ep summary:hover{background:rgba(255,255,255,.02)}
+.m{font:700 .75rem var(--mono);padding:4px 9px;border-radius:6px;min-width:62px;text-align:center;color:#06121f}
+.GET{background:var(--get)}.POST{background:var(--post);color:#fff}.PUT{background:var(--put)}.DELETE{background:var(--del);color:#fff}
+.mini.GET{background:rgba(34,197,94,.18);color:var(--get)}.mini.POST{background:rgba(59,130,246,.2);color:#93c5fd}
+.mini.PUT{background:rgba(245,158,11,.18);color:var(--put)}.mini.DELETE{background:rgba(239,68,68,.18);color:#fca5a5}
+.path{font-family:var(--mono);font-size:.92rem}
+.sum{color:var(--muted);font-size:.85rem;margin-left:auto;text-align:right}
+.ep-body{padding:4px 18px 18px;border-top:1px solid var(--line)}
+.acc{display:inline-block;font-size:.72rem;padding:2px 9px;border-radius:99px;background:rgba(99,102,241,.15);color:#a5b4fc;margin-top:12px}
+.st{display:inline-block;font:700 .75rem var(--mono);padding:2px 8px;border-radius:5px;margin-right:6px}
+.s2{background:rgba(34,197,94,.15);color:var(--get)}.s4{background:rgba(245,158,11,.15);color:var(--put)}.s5{background:rgba(239,68,68,.15);color:#fca5a5}
+.hidden{display:none!important}
+
+/* tabs */
+.tabs{display:flex;gap:6px;margin-top:10px}
+.tabs button{background:var(--panel);border:1px solid var(--line);color:var(--muted);padding:6px 14px;border-radius:8px 8px 0 0;cursor:pointer;font:inherit;font-size:.85rem}
+.tabs button.on{color:var(--cyan);border-bottom-color:var(--code);background:var(--code)}
+.tabpane{display:none}.tabpane.on{display:block}
+
+/* flow */
+.flow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:14px 0}
+.flow .box{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px 12px;font-size:.85rem}
+.flow .arr{color:var(--cyan)}
+
+footer{color:var(--muted);font-size:.82rem;border-top:1px solid var(--line);padding-top:20px}
+.burger{display:none}
+@media(max-width:900px){
+  .side{position:static;width:auto;border-right:0;border-bottom:1px solid var(--line)}
+  main{margin-left:0}
+  .sum{display:none}
+}
+</style>
+</head>
+<body>
+
+<aside class="side">
+  <div class="brand"><div class="logo">IV</div><b>Investview-API</b></div>
+  <p class="ver">Documentação · v1 · Nov/2026</p>
+  <input id="search" type="search" placeholder="Buscar rota ou termo…" autocomplete="off">
+  <nav id="nav">
+    <h4>Introdução</h4>
+    <a class="nav" href="#visao">Visão geral</a>
+    <a class="nav" href="#comunicacao">Headers e CORS</a>
+    <a class="nav" href="#erros">Tratamento de erros</a>
+    <h4>Segurança</h4>
+    <a class="nav" href="#auth-arq">Autenticação dupla</a>
+    <a class="nav" href="#rbac">RBAC e IDOR</a>
+    <h4>Endpoints</h4>
+    <div id="navEndpoints"></div>
+    <h4>Frontend</h4>
+    <a class="nav" href="#interceptor">Interceptor Axios</a>
+    <a class="nav" href="#brapi">Integração brapi</a>
+    <a class="nav" href="#uiux">Sugestões de UI/UX</a>
+  </nav>
+</aside>
+
+<main>
+<section id="visao">
+  <h1><span>Investview-API</span></h1>
+  <p class="lead">API REST para gestão e simulação de investimentos, controle de favoritos, carteiras de usuários e análise de correlação entre ativos por meio de um <b>Grafo Global de Coocorrência</b>.</p>
+  <div class="badges">
+    <span class="chip">Java <b>25</b></span>
+    <span class="chip">Spring Boot <b>4.1.2</b></span>
+    <span class="chip">Spring Security <b>OAuth2 RS + JWT</b></span>
+    <span class="chip">Spring Data <b>JPA</b></span>
+    <span class="chip">PostgreSQL <b>Neon</b> / H2 (dev)</span>
+    <span class="chip">Redis 7 <b>Upstash</b> / local</span>
+  </div>
+
+  <h3>Ambientes</h3>
+  <table>
+    <tr><th>Ambiente</th><th>URL</th></tr>
+    <tr><td>Local</td><td><code>http://localhost:8080</code></td></tr>
+    <tr><td>Swagger UI <small>(dev/test)</small></td><td><code>http://localhost:8080/swagger-ui.html</code></td></tr>
+    <tr><td>OpenAPI JSON</td><td><code>http://localhost:8080/v3/api-docs</code></td></tr>
+    <tr><td>Produção</td><td>URL de deploy (Swagger desabilitado por segurança)</td></tr>
+  </table>
+
+  <h3>Filosofia: cotações e ativos</h3>
+  <div class="grid">
+    <div class="card"><h5>O backend NÃO…</h5><p>Faz chamadas a APIs financeiras externas em tempo de execução nem armazena cotações em tempo real.</p></div>
+    <div class="card"><h5>O backend guarda…</h5><p>Apenas a identidade do ativo: <code>symbol</code> (maiúsculo: <code>PETR4</code>, <code>BTC</code>, <code>HGLG11</code>) e <code>name</code> opcional.</p></div>
+    <div class="card"><h5>O frontend…</h5><p>Busca favoritos/carteira aqui e consulta preços, variações, gráficos e dividendos direto na <a href="https://brapi.dev" target="_blank" rel="noopener">brapi</a> usando o <code>symbol</code>.</p></div>
+  </div>
+</section>
+
+<section id="comunicacao">
+  <h2>Padrão de comunicação</h2>
+  <table>
+    <tr><th>Item</th><th>Regra</th></tr>
+    <tr><td><code>Content-Type</code></td><td>Requisições com corpo (POST, PUT): <code>application/json</code></td></tr>
+    <tr><td><code>Authorization</code></td><td>Rotas protegidas: <code>Bearer &lt;TOKEN_JWT_OU_GOOGLE_ID_TOKEN&gt;</code></td></tr>
+    <tr><td>CORS</td><td>Origens permitidas: <code>localhost:5173</code>, <code>localhost:3000</code>, Vercel e Firebase. Preflight <code>OPTIONS</code> suportado e <code>Access-Control-Allow-Credentials: true</code>.</td></tr>
+  </table>
+</section>
+
+<section id="erros">
+  <h2>Tratamento de erros</h2>
+  <p>100% das respostas de erro, inclusive 401 e 403 gerados pelo Spring Security no filter chain, seguem o mesmo contrato <code>ErrorResponse</code>:</p>
+  <div class="codewrap"><pre class="json"><code>{
+  "timestamp": "2026-11-14T15:30:00",
+  "status": 400,
+  "error": "Bad Request",
+  "message": "Dados da requisição inválidos",
+  "path": "/users/1/favorites",
+  "errors": [
+    { "field": "symbol", "message": "não deve estar em branco" }
+  ]
+}</code></pre></div>
+  <h3>Códigos de status</h3>
+  <table>
+    <tr><th>Código</th><th>Significado</th></tr>
+    <tr><td><span class="st s2">200</span>OK</td><td>Leitura ou atualização realizada com sucesso.</td></tr>
+    <tr><td><span class="st s2">201</span>Created</td><td>Recurso criado; retorna header <code>Location: /recurso/{id}</code>.</td></tr>
+    <tr><td><span class="st s2">204</span>No Content</td><td>DELETE ou ação sem retorno (ex.: <code>POST /auth/logout</code>).</td></tr>
+    <tr><td><span class="st s4">400</span>Bad Request</td><td>Validação de DTO falhou. Detalhes na lista <code>errors</code>.</td></tr>
+    <tr><td><span class="st s4">401</span>Unauthorized</td><td>Token ausente, expirado, assinatura inválida, usuário inexistente/excluído ou credenciais erradas.</td></tr>
+    <tr><td><span class="st s4">403</span>Forbidden</td><td>Acesso a dados de outro usuário (IDOR) ou rota exclusiva de ADMIN.</td></tr>
+    <tr><td><span class="st s4">404</span>Not Found</td><td>Usuário, favorito ou item de carteira inexistente.</td></tr>
+    <tr><td><span class="st s4">409</span>Conflict</td><td>Conflito de integridade (e-mail já cadastrado, ativo já favoritado).</td></tr>
+    <tr><td><span class="st s5">500</span>Internal Error</td><td>Erro inesperado; detalhes técnicos omitidos.</td></tr>
+  </table>
+</section>
+
+<section id="auth-arq">
+  <h2>Autenticação dupla</h2>
+  <p>A API aceita dois tipos de token no mesmo header <code>Authorization: Bearer &lt;TOKEN&gt;</code>.</p>
+
+  <h3>Forma 1 · Login com Google (OAuth2 Resource Server)</h3>
+  <div class="flow">
+    <div class="box">Front + Google Identity Services</div><span class="arr">→</span>
+    <div class="box">ID Token (JWT)</div><span class="arr">→</span>
+    <div class="box">Bearer na API</div><span class="arr">→</span>
+    <div class="box">Validação JWK + audience</div><span class="arr">→</span>
+    <div class="box">Provisionamento JIT</div>
+  </div>
+  <ol>
+    <li>O frontend autentica o usuário com o Client ID e recebe o ID Token com as claims <code>email</code>, <code>email_verified: true</code>, <code>name</code> e <code>sub</code>.</li>
+    <li>O backend valida a assinatura no JWK Set URI oficial do Google e a audience (<code>APP_OAUTH_GOOGLE_CLIENT_ID</code>).</li>
+    <li><b>Provisionamento JIT:</b> na primeira chamada cria o usuário em <code>tb_users</code> (senha nula, role <code>USER</code>). Se o e-mail estiver em <code>APP_SECURITY_ADMIN_EMAILS</code>, atribui <code>ADMIN</code>.</li>
+  </ol>
+
+  <h3>Forma 2 · Login local (e-mail e senha) com Access + Refresh</h3>
+  <div class="grid">
+    <div class="card"><h5>Access Token</h5><p>JWT HMAC-SHA256 · TTL <b>1 h</b><br>Claims: <code>iss</code>/<code>aud</code>: <code>investview-api</code>, <code>email</code>, <code>role</code>, <code>name</code></p></div>
+    <div class="card"><h5>Refresh Token</h5><p>Token opaco aleatório de 32 bytes · TTL <b>7 dias</b> · armazenado no Redis</p></div>
+    <div class="card"><h5>Rotação atômica</h5><p><code>POST /auth/refresh</code> invalida o refresh anterior e emite um novo par. Reuso do antigo retorna <b>401</b>.</p></div>
+    <div class="card"><h5>Logout seguro</h5><p><code>POST /auth/logout</code> revoga a chave no Redis e retorna <b>204</b>.</p></div>
+  </div>
+</section>
+
+<section id="rbac">
+  <h2>Controle de acesso (RBAC + IDOR)</h2>
+  <table>
+    <tr><th>Regra</th><th>Detalhe</th></tr>
+    <tr><td>Roles</td><td><code>USER</code> (padrão) e <code>ADMIN</code></td></tr>
+    <tr><td>Proteção IDOR <code>requireOwnerOrAdmin</code></td><td>Rotas <code>/users/{userId}/...</code> exigem <code>userId</code> igual ao ID do usuário autenticado. Tentar acessar outro usuário retorna <b>403</b>. ADMIN acessa qualquer ID.</td></tr>
+    <tr><td>Gestão de usuários</td><td><code>/users/**</code> é exclusivo do perfil <code>ADMIN</code>.</td></tr>
+  </table>
+</section>
+
+<section id="endpoints">
+  <h2>Catálogo de endpoints</h2>
+  <p class="lead" style="font-size:.95rem">Clique em uma rota para expandir. Use a busca lateral para filtrar.</p>
+  <div id="endpointsRoot"></div>
+</section>
+
+<section id="frontend">
+  <h2>Guia de implementação no frontend</h2>
+
+  <h3 id="interceptor">1 · Interceptor Axios com refresh automático</h3>
+  <p>Ao receber <b>401</b>, o interceptor chama <code>/auth/refresh</code> uma única vez (mesmo com várias requisições simultâneas), repete as requisições pendentes e, se o refresh falhar, desloga o usuário.</p>
+  <div class="codewrap"><pre><code>import axios from 'axios';
+
+const api = axios.create({ baseURL: import.meta.env.VITE_API_URL });
+
+const store = {
+  get access()  { return localStorage.getItem('accessToken'); },
+  get refresh() { return localStorage.getItem('refreshToken'); },
+  save(t) {
+    localStorage.setItem('accessToken', t.token);
+    localStorage.setItem('refreshToken', t.refreshToken);
+  },
+  clear() { localStorage.removeItem('accessToken'); localStorage.removeItem('refreshToken'); }
+};
+
+api.interceptors.request.use(function (config) {
+  if (store.access) config.headers.Authorization = 'Bearer ' + store.access;
+  return config;
+});
+
+let refreshing = null; // promise compartilhada: evita refresh em paralelo
+
+function doRefresh() {
+  if (!refreshing) {
+    // axios "puro" para não cair no próprio interceptor
+    refreshing = axios
+      .post(api.defaults.baseURL + '/auth/refresh', { refreshToken: store.refresh })
+      .then(function (res) { store.save(res.data); return res.data.token; })
+      .finally(function () { refreshing = null; });
+  }
+  return refreshing;
+}
+
+api.interceptors.response.use(
+  function (res) { return res; },
+  async function (error) {
+    const original = error.config;
+    const isAuthRoute = original.url.startsWith('/auth/');
+    if (error.response?.status === 401 &amp;&amp; !original._retry &amp;&amp; !isAuthRoute &amp;&amp; store.refresh) {
+      original._retry = true;
+      try {
+        const newToken = await doRefresh();
+        original.headers.Authorization = 'Bearer ' + newToken;
+        return api(original);
+      } catch (e) {
+        store.clear();
+        window.location.href = '/login';
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
+export default api;</code></pre></div>
+  <div class="callout warn"><b>Atenção:</b> o refresh token é rotacionado a cada uso. Sempre salve o par novo devolvido por <code>/auth/refresh</code>, pois reutilizar o antigo retorna 401. Para o login Google, o ID Token expira em cerca de 1 h e não passa por esse fluxo: renove-o pelo Google Identity Services.</div>
+
+  <h3 id="brapi">2 · Cotações em tempo real com a brapi</h3>
+  <p>O fluxo é: buscar os <code>symbol</code> nesta API, juntar em uma única chamada à brapi e mesclar o resultado por símbolo.</p>
+  <div class="tabs" data-tabs>
+    <button class="on" data-t="t1">Função</button>
+    <button data-t="t2">Hook React</button>
+  </div>
+  <div class="tabpane on" id="t1"><div class="codewrap"><pre><code>const BRAPI = 'https://brapi.dev/api/quote';
+const BRAPI_TOKEN = import.meta.env.VITE_BRAPI_TOKEN; // crie em brapi.dev
+
+export async function fetchQuotes(symbols) {
+  if (!symbols.length) return {};
+  const url = BRAPI + '/' + symbols.join(',') + '?token=' + BRAPI_TOKEN;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error('brapi: ' + res.status);
+  const data = await res.json();
+  const bySymbol = {};
+  data.results.forEach(function (q) {
+    bySymbol[q.symbol] = {
+      price: q.regularMarketPrice,
+      changePct: q.regularMarketChangePercent,
+      name: q.shortName
+    };
+  });
+  return bySymbol;
+}
+
+// Favoritos com cotação
+export async function favoritesWithQuotes(userId) {
+  const favs = (await api.get('/users/' + userId + '/favorites')).data;
+  const quotes = await fetchQuotes(favs.map(function (f) { return f.symbol; }));
+  return favs.map(function (f) { return Object.assign({}, f, quotes[f.symbol] || {}); });
+}</code></pre></div></div>
+  <div class="tabpane" id="t2"><div class="codewrap"><pre><code>import { useEffect, useState } from 'react';
+
+export function usePortfolioValue(userId) {
+  const [state, setState] = useState({ items: [], total: 0, loading: true });
+
+  useEffect(function () {
+    let alive = true;
+    async function load() {
+      const pf = (await api.get('/users/' + userId + '/portfolio')).data;
+      const quotes = await fetchQuotes(pf.items.map(function (i) { return i.symbol; }));
+      const items = pf.items.map(function (i) {
+        const price = quotes[i.symbol]?.price ?? 0;
+        return Object.assign({}, i, { price: price, value: price * i.quantity });
+      });
+      const total = items.reduce(function (s, i) { return s + i.value; }, 0);
+      if (alive) setState({ items: items, total: total, loading: false });
+    }
+    load();
+    const id = setInterval(load, 60000); // atualiza a cada 1 min
+    return function () { alive = false; clearInterval(id); };
+  }, [userId]);
+
+  return state;
+}</code></pre></div></div>
+  <div class="callout"><b>Dica:</b> o plano gratuito da brapi tem limites de requisições e de ativos por chamada. Faça cache em memória por 30 a 60 s e agrupe todos os símbolos em uma só requisição. Valor total da carteira = <code>quantity × price</code>, calculado no front.</div>
+
+  <h3 id="uiux">3 · Sugestões de UI/UX</h3>
+  <div class="grid">
+    <div class="card"><h5>Login dual</h5><p>Botão "Entrar com Google" no topo, divisor "ou" e formulário e-mail/senha. Mostre erro inline em 401 sem revelar qual campo falhou. Salve o par de tokens apenas no login local.</p></div>
+    <div class="card"><h5>Dashboard de favoritos</h5><p>Grade de cards com símbolo, nome, preço e variação colorida (verde/vermelho). Estrela para favoritar/desfavoritar, busca com autocomplete da brapi e estado vazio com chamada para ação. Trate 409 como "já está nos favoritos".</p></div>
+    <div class="card"><h5>Carteira consolidada</h5><p>Cabeçalho com patrimônio total e variação do dia, tabela ordenável (ativo, quantidade, preço, valor, % da carteira) e gráfico de rosca de alocação. Edição inline de quantidade (PUT) e botão "adicionar cotas" (POST soma).</p></div>
+    <div class="card"><h5>Visualizador de grafo</h5><p>Cytoscape.js ou Vis.js com <code>GET /graph</code>. Tamanho do nó = grau, espessura da aresta = <code>weight</code>. Clique no nó para listar <code>/neighbors</code>; dois nós selecionados disparam <code>/path</code> e destacam o caminho. Cores por componente conexo.</p></div>
+  </div>
+  <div class="callout warn"><b>Cuidado no POST de itens da carteira:</b> ele faz <i>upsert somatório</i>. Se o usuário "corrige" a quantidade, use <code>PUT /portfolio/items/{itemId}</code> (valor absoluto). Caso contrário a quantidade será duplicada.</div>
+</section>
+
+<footer>Investview-API · documentação gerada em 14/11/2026. Fonte da verdade: OpenAPI em <code>/v3/api-docs</code> (dev/test).</footer>
+</main>
+
+<script>
+/* ---------- dados dos endpoints ---------- */
+var MODULES = [
+ {id:'auth', title:'1 · Autenticação', base:'/auth', tag:'Público / Google', eps:[
+  {m:'POST',p:'/auth/login',sum:'Login local',acc:'Público',
+   desc:'Autentica com e-mail e senha e devolve o par de tokens.',
+   req:'{\n  "email": "investidor@exemplo.com",\n  "password": "senhaSecreta123"\n}',
+   res:[[200,'{\n  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",\n  "tokenType": "Bearer",\n  "expiresIn": 3600,\n  "refreshToken": "4a7f9b8c-2d1e-4f3a-9b8c-1e2d3f4a5b6c...",\n  "refreshExpiresIn": 604800\n}'],[400,'Validação falhou'],[401,'Credenciais inválidas ou usuário sem senha']]},
+  {m:'POST',p:'/auth/refresh',sum:'Renovar tokens',acc:'Público (requer refresh token)',
+   desc:'Rotação atômica: invalida o refresh anterior no Redis e emite um novo par.',
+   req:'{\n  "refreshToken": "4a7f9b8c-2d1e-4f3a-9b8c-1e2d3f4a5b6c..."\n}',
+   res:[[200,'Novo TokenResponse (mesmo formato do login)'],[401,'Token expirado, inválido, já usado ou usuário excluído']]},
+  {m:'POST',p:'/auth/logout',sum:'Encerrar sessão',acc:'Público (requer refresh token)',
+   desc:'Revoga a chave do refresh token no Redis.',
+   req:'{\n  "refreshToken": "4a7f9b8c-2d1e-4f3a-9b8c-1e2d3f4a5b6c..."\n}',
+   res:[[204,'Deslogado com sucesso (sem corpo)']]},
+  {m:'GET',p:'/auth/me',sum:'Perfil (Google)',acc:'Autenticado · Google ID Token',
+   desc:'Retorna o usuário associado ao ID Token do Google (cria via JIT na primeira chamada).',
+   res:[[200,'{\n  "id": 1,\n  "name": "Maria Silva",\n  "email": "maria@gmail.com",\n  "role": "USER"\n}'],[401,'Token inválido ou e-mail não verificado']]}
+ ]},
+ {id:'users', title:'2 · Usuários', base:'/users', tag:'Exclusivo ADMIN', eps:[
+  {m:'POST',p:'/users',sum:'Criar usuário',acc:'ADMIN',desc:'Cria um usuário local.',
+   req:'{\n  "name": "Carlos",\n  "email": "carlos@investview.com",\n  "password": "senhaForte123"\n}',
+   res:[[201,'Usuário criado'],[400,'Validação falhou'],[409,'E-mail já cadastrado']]},
+  {m:'GET',p:'/users',sum:'Listar todos',acc:'ADMIN',desc:'Lista todos os usuários.',res:[[200,'Lista de usuários']]},
+  {m:'GET',p:'/users/{id}',sum:'Buscar por ID',acc:'ADMIN',desc:'Busca um usuário pelo ID.',res:[[200,'Usuário'],[404,'Não encontrado']]},
+  {m:'PUT',p:'/users/{id}',sum:'Atualizar',acc:'ADMIN',desc:'Atualiza dados do usuário. A senha é opcional.',
+   req:'{\n  "name": "Novo Nome",\n  "email": "novo@email.com",\n  "password": "opcionalNovaSenha"\n}',
+   res:[[200,'Atualizado'],[404,'Não encontrado'],[409,'E-mail em uso']]},
+  {m:'DELETE',p:'/users/{id}',sum:'Excluir (cascata)',acc:'ADMIN',desc:'Exclui o usuário com cascata (favoritos e carteira).',res:[[204,'Removido'],[404,'Não encontrado']]}
+ ]},
+ {id:'fav', title:'3 · Favoritos', base:'/users/{userId}/favorites', tag:'Dono ou ADMIN', eps:[
+  {m:'POST',p:'/users/{userId}/favorites',sum:'Favoritar ativo',acc:'Dono ou ADMIN',
+   desc:'Normaliza <code>symbol</code> para maiúsculo (<code>petr4</code> vira <code>PETR4</code>).',
+   req:'{\n  "symbol": "PETR4",\n  "name": "Petrobras PN"\n}',
+   res:[[201,'Criado (header Location)'],[400,'Bad Request'],[403,'Forbidden'],[409,'Ativo já favoritado']]},
+  {m:'GET',p:'/users/{userId}/favorites',sum:'Listar favoritos',acc:'Dono ou ADMIN',desc:'Lista os favoritos do usuário.',
+   res:[[200,'[\n  { "id": 1, "symbol": "PETR4", "name": "Petrobras PN" }\n]']]},
+  {m:'DELETE',p:'/users/{userId}/favorites/{favoriteId}',sum:'Remover favorito',acc:'Dono ou ADMIN',desc:'Remove o ativo dos favoritos.',res:[[204,'Removido'],[404,'Não encontrado']]}
+ ]},
+ {id:'pf', title:'4 · Carteira', base:'/users/{userId}/portfolio', tag:'Dono ou ADMIN', eps:[
+  {m:'GET',p:'/users/{userId}/portfolio',sum:'Obter carteira',acc:'Dono ou ADMIN',
+   desc:'Retorna a carteira com as cotas. Se não existir, cria automaticamente com o nome "Minha carteira".',
+   res:[[200,'{\n  "id": 1,\n  "name": "Minha carteira",\n  "items": [\n    { "id": 5, "symbol": "MXRF11", "name": "Maxi Renda FII", "quantity": 150.00000000 }\n  ]\n}']]},
+  {m:'PUT',p:'/users/{userId}/portfolio',sum:'Renomear carteira',acc:'Dono ou ADMIN',desc:'Altera o nome da carteira.',
+   req:'{\n  "name": "Nova Carteira 2026"\n}',res:[[200,'Carteira atualizada']]},
+  {m:'GET',p:'/users/{userId}/portfolio/items',sum:'Listar cotas',acc:'Dono ou ADMIN',desc:'Lista diretamente as cotas da carteira.',res:[[200,'Lista de itens']]},
+  {m:'POST',p:'/users/{userId}/portfolio/items',sum:'Adicionar cota (upsert somatório)',acc:'Dono ou ADMIN',
+   desc:'Adiciona a cota. <b>Se o <code>symbol</code> já existir, a quantidade é SOMADA à existente.</b> Aceita até 11 dígitos inteiros e 8 casas decimais (frações e criptoativos).',
+   req:'{\n  "symbol": "WEGE3",\n  "name": "WEG S.A.",\n  "quantity": 100\n}',res:[[201,'Criado'],[400,'Bad Request']]},
+  {m:'PUT',p:'/users/{userId}/portfolio/items/{itemId}',sum:'Atualizar cota (absoluto)',acc:'Dono ou ADMIN',
+   desc:'Define a quantidade absoluta e/ou o nome.',req:'{\n  "quantity": 250,\n  "name": "WEG ON"\n}',res:[[200,'Atualizado'],[404,'Não encontrado']]},
+  {m:'DELETE',p:'/users/{userId}/portfolio/items/{itemId}',sum:'Remover cota',acc:'Dono ou ADMIN',desc:'Remove a cota da carteira.',res:[[204,'Removido'],[404,'Não encontrado']]}
+ ]},
+ {id:'graph', title:'5 · Grafo global', base:'/graph', tag:'Autenticado', intro:'Rede agregada de coocorrência de favoritos, sem expor investidores. <b>Nó</b>: ativo (<code>id = symbol</code>, <code>name</code>). <b>Aresta</b>: dois ativos favoritados pelo mesmo usuário. <b>Peso</b>: quantidade de usuários distintos que compartilham o par.', eps:[
+  {m:'GET',p:'/graph',sum:'Grafo completo',acc:'Autenticado',desc:'Todos os nós e arestas com pesos. Ideal para Cytoscape, Vis.js ou D3.',
+   res:[[200,'{\n  "nodes": [ { "id": "PETR4", "name": "Petrobras PN" } ],\n  "edges": [ { "source": "PETR4", "target": "VALE3", "weight": 14 } ]\n}']]},
+  {m:'GET',p:'/graph/assets/{symbol}/neighbors',sum:'Vizinhos de um ativo',acc:'Autenticado',desc:'Vizinhos conectados, ordenados por peso decrescente.',res:[[200,'Lista de vizinhos com peso']]},
+  {m:'GET',p:'/graph/path?from={symbol}&to={symbol}',sum:'Menor caminho (BFS)',acc:'Autenticado',desc:'Menor caminho entre dois ativos via busca em largura.',
+   res:[[200,'{\n  "found": true,\n  "path": ["PETR4", "VALE3", "BTC"],\n  "length": 2\n}']]},
+  {m:'GET',p:'/graph/components',sum:'Componentes conexos',acc:'Autenticado',desc:'Componentes conexos ordenados por tamanho (<code>string[][]</code>).',
+   res:[[200,'[\n  ["PETR4", "VALE3", "BTC"],\n  ["HGLG11", "MXRF11"]\n]']]}
+ ]}
+];
+
+/* ---------- helpers ---------- */
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function hl(src){
+  return esc(src).replace(/("(?:\\.|[^"\\])*")(\s*:)?|\b(true|false|null)\b|(-?\b\d+(?:\.\d+)?\b)/g,
+    function(m,str,colon,bool,num){
+      if(str) return colon ? '<span class="k">'+str+'</span>'+colon : '<span class="s">'+str+'</span>';
+      if(bool) return '<span class="b">'+bool+'</span>';
+      if(num) return '<span class="n">'+num+'</span>';
+      return m;
+    });
+}
+function code(src,json){return '<div class="codewrap"><pre'+(json?' class="json"':'')+'><code>'+(json?hl(src):esc(src))+'</code></pre></div>';}
+function stClass(c){return c<300?'s2':c<500?'s4':'s5';}
+
+/* ---------- render ---------- */
+var root=document.getElementById('endpointsRoot'), navE=document.getElementById('navEndpoints');
+MODULES.forEach(function(mod){
+  var h='<div class="mod" id="'+mod.id+'"><h3>'+mod.title+'</h3><span class="tag">'+mod.tag+'</span></div>';
+  if(mod.intro) h+='<div class="callout">'+mod.intro+'</div>';
+  navE.insertAdjacentHTML('beforeend','<a class="nav" href="#'+mod.id+'">'+mod.title+'</a>');
+  mod.eps.forEach(function(e){
+    var hay=(e.m+' '+e.p+' '+e.sum+' '+e.desc).toLowerCase();
+    h+='<details class="ep" data-hay="'+hay.replace(/"/g,'')+'"><summary><span class="m '+e.m+'">'+e.m+'</span><span class="path">'+esc(e.p)+'</span><span class="sum">'+e.sum+'</span></summary><div class="ep-body">';
+    h+='<span class="acc">Acesso: '+e.acc+'</span><p>'+e.desc+'</p>';
+    if(e.req){h+='<div class="lbl">Request body</div>'+code(e.req,true);}
+    h+='<div class="lbl">Respostas</div>';
+    e.res.forEach(function(r){
+      var isJson=/^[\[{]/.test(r[1]);
+      h+= isJson ? '<p><span class="st '+stClass(r[0])+'">'+r[0]+'</span></p>'+code(r[1],true)
+                 : '<p><span class="st '+stClass(r[0])+'">'+r[0]+'</span>'+r[1]+'</p>';
+    });
+    h+='</div></details>';
+  });
+  root.insertAdjacentHTML('beforeend',h);
+});
+
+/* ---------- copy buttons ---------- */
+document.querySelectorAll('.codewrap').forEach(function(w){
+  var b=document.createElement('button'); b.className='copy'; b.textContent='Copiar';
+  b.onclick=function(){
+    navigator.clipboard.writeText(w.querySelector('pre').innerText).then(function(){
+      b.textContent='Copiado!'; setTimeout(function(){b.textContent='Copiar';},1400);
+    });
+  };
+  w.appendChild(b);
+});
+
+/* ---------- tabs ---------- */
+document.querySelectorAll('[data-tabs]').forEach(function(t){
+  t.querySelectorAll('button').forEach(function(btn){
+    btn.onclick=function(){
+      t.querySelectorAll('button').forEach(function(x){x.classList.remove('on');});
+      btn.classList.add('on');
+      var group=t.parentNode;
+      group.querySelectorAll('.tabpane').forEach(function(p){p.classList.remove('on');});
+      document.getElementById(btn.dataset.t).classList.add('on');
+    };
+  });
+});
+
+/* ---------- search ---------- */
+document.getElementById('search').addEventListener('input',function(e){
+  var q=e.target.value.trim().toLowerCase();
+  document.querySelectorAll('details.ep').forEach(function(d){
+    var hit=!q||d.dataset.hay.indexOf(q)>-1;
+    d.classList.toggle('hidden',!hit);
+    if(q&&hit) d.open=true; else if(!q) d.open=false;
+  });
+});
+
+/* ---------- scrollspy ---------- */
+var links=[].slice.call(document.querySelectorAll('#nav a.nav'));
+var targets=links.map(function(a){return document.querySelector(a.getAttribute('href'));});
+function spy(){
+  var y=window.scrollY+120, cur=0;
+  targets.forEach(function(t,i){ if(t&&t.offsetTop<=y) cur=i; });
+  links.forEach(function(a,i){a.classList.toggle('active',i===cur);});
+}
+window.addEventListener('scroll',spy,{passive:true}); spy();
+</script>
+</body>
+</html>
